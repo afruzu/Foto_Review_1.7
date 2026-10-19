@@ -1,0 +1,127 @@
+====================================================================
+CHRONOLOGICAL CHANGELOG - FOTO_REVIEW
+====================================================================
+
+[Versione 1.7.0] - 19/10/2026
+--------------------------------------------------------------------
+* Eliminazione righe e bordi neri - Tema Blu Reale Luminoso:
+  - Sostituite integralmente tutte le righe nere e i bordi rigidi (relief SOLID bd=1)
+    con un'elegante palette blu moderna (highlightbackground #3b82f6 / #93c5fd).
+  - Header superiore principale, header sidebar e modale di output rinnovati in
+    Blu Reale (#1e40af), eliminando l'aspetto tetro o scuro e donando luminosità.
+* Motore di Scansione Asincrono MULTITHREAD:
+  - Implementato `sync_files_to_db_multithread` in `db_analyzer.py` con esecuzione
+    parallela del calcolo checksum SHA-256 e dei metadati EXIF tramite ThreadPoolExecutor
+    distribuito su tutti i core CPU disponibili (fino a 12 worker contemporanei).
+  - Esecuzione in background thread non-bloccante: l'applicazione non va mai più
+    in stato "Nessuna risposta" di Windows durante la scansione di grandi archivi.
+  - Finestra modale di avanzamento live con Progressbar fluida, contatore file
+    (es. "342 di 1.250 file - 27.4%") e nome del file attualmente esaminato.
+* Cornice Sensoriale a 4 Pixel & Sfondi Saturi per Feedback Istantaneo:
+  - Sfondi decisionali potenziati e resi più saturi e chiaramente distinguibili:
+    KEEP (Verde vivido #86efac), DISCARD (Rosso/Corallo vivido #fca5a5),
+    ALTRO (Giallo/Ambra vivido #fde047), PENDING (Slate neutro #cbd5e1).
+  - Aggiunta una spessa cornice di 4 pixel ad altissima saturazione cromatica
+    attorno al visualizzatore (#15803d KEEP, #dc2626 DISCARD, #d97706 ALTRO, #2563eb PENDING)
+    per trasmettere un immediato messaggio sensoriale della scelta operata anche quando
+    le immagini sono ingrandite a pieno schermo rispetto alla canvas.
+* Prevenzione e Risoluzione Sovrapposizioni Stringhe & Path:
+  - Cancellazione esplicita preventiva di tutti i testi precedenti prima di applicare
+    nuove stringhe su label, footer, card e modali.
+  - Algoritmo `shorten_path` per formattare con ellissi i percorsi lunghi nel dashboard
+    impedendo che collidano o si sovrappongano alle chips dei contatori.
+  - Applicazione di `wraplength` calibrati su tutti i metadati e inversione dell'ordine
+    di packing per i pulsanti di copia (ancorati a destra prima del testo espandibile).
+  - Chiamata sistematica preventiva di `canvas.delete("all")` prima del disegno di
+    anteprime, placeholder o schermate di completamento.
+--------------------------------------------------------------------
+* Interfaccia Grafica Moderna & Comunicativa (UI Principale):
+  - Nuova palette cromatica "Slate Modern" ad alto contrasto con gerarchia visiva chiara, card su superfici bianche e bordi sottili.
+  - Abilitazione automatica consapevolezza DPI su Windows per rendering ultra-nitido di testi, controlli e anteprime su display ad alta densità.
+  - Riprogettazione responsive del visualizzatore immagini: la canvas si adatta dinamicamente alle dimensioni della finestra mantenendo le proporzioni corrette con algoritmo di campionamento Lanczos e debouncing per garantire massima fluidità.
+  - Badge di stato visivo avanzato in testa al viewer fotografico (KEEP verde, DISCARD rosso, ALTRO ambra, PENDING grigio) con colorazione adattiva e indicazione dell'ora dell'audit.
+  - Nuova azione e scorciatoia per la decisione diretta ALTRO ('A' / 'a'): permette all'operatore di contrassegnare manualmente materiale anomalo, documenti o foto da verificare a parte, completando il set di classificazione.
+  - Riorganizzazione della barra di navigazione con controlli di salto rapido a inizio/fine archivio, salti ±10 e ±100, e campo "Vai a foto #" per saltare direttamente a qualsiasi indice numerico.
+  - Toolbar di rotazione rapida (↺ -90°, ↻ +90°, 🔄 Ripristina) con indicatore dell'angolo attuale.
+  - Sidebar dei metadati completamente riorganizzata a schede e card informative: proprietà del file (con pulsanti copia nome e hash), cronologia & origine data, parametri fotocamera e scatto (esposizione, diaframma, ISO, focale), e visualizzatore completo dei metadati EXIF.
+  - Barra superiore e dashboard con barra di avanzamento visuale ttk.Progressbar, percentuale di completamento in tempo reale e badge contatori istantanei per ogni categoria.
+  - Dialogo integrato di aiuto per tutte le scorciatoie da tastiera richiamabile con pulsante dedicato o tasto F1.
+  - Notifica trasparente e informativa post-caricamento cartella sui duplicati certi rilevati e isolati.
+* Centro Operativo di Output & Smistamento v1.6:
+  - Riprogettazione completa della finestra modale in formato widescreen (920x880) con supporto allo scorrimento fluido con rotellina del mouse.
+  - Dashboard statistica in tempo reale a tessere metriche: Totale Archivio, Da Elaborare, Già Elaborati, KEEP, DISCARD, PENDING (con dettaglio senza data), ALTRO.
+  - Banner di allerta evidente per la modalità Simulazione (Dry-Run).
+  - Gruppi operativi (A, B, C, D) strutturati con titoli chiari, descrizioni autoesplicative e badge conteggi dinamici direttamente sui pulsanti d'azione.
+  - Introduzione di 12 Preset di Query SQL pronte all'uso tramite menu a tendina (KEEP, DISCARD, ALTRO, per anno, file pesanti, WhatsApp, senza EXIF, placeholder 1970).
+  - Riquadro di anteprima query SQL integrato direttamente nella finestra (con tabella dettagliata dei file trovati, dimensioni, date e decisioni) prima dell'esecuzione fisica.
+  - Integrazione pulsanti rapidi per aprire la cartella di lavoro, visualizzare/aprire i file CSV generati (report_decisioni.csv, report_duplicati.csv) e consultare il registro operazioni output_log.txt.
+* Manutenzione & Backend:
+  - Metodi helper `get_duplicate_count` e `get_quick_stats` in `db_analyzer.py`.
+  - Metodi `preview_query_detailed` e `open_path` in `output.py`.
+  - Gestione sicura eccezioni e preservazione compatibilità con i database SQLite v1.0-1.5.
+
+[Versione 1.5.0] - 16/10/2026
+--------------------------------------------------------------------
+* Nuovo campo `sha256` in `photo_reviews` + indice (sha256, size_bytes);
+  migrazione automatica DB legacy (colonna + backfill + timestamp).
+* Calcolo SHA-256 a blocchi (1 MB) in fase di costruzione DB per ogni file
+  >0 byte; file 0 byte / ALTRO esclusi (sha NULL) per non raggruppare il vuoto.
+* Deduplicazione automatica post-costruzione, senza intervento operatore e
+  prima dei PENDING: gruppi con stesso SHA-256 + stessa dimensione, solo
+  PENDING residenti; un originale resta in radice, gli altri in
+  "duplicati certi/" (collisioni nome(1).ext). Il record viene SPOSTATO da
+  photo_reviews a duplicate_files (analoga + keeper/destinazione): la tabella
+  principale riflette solo la cartella in esame visivo. Audit separata
+  report_duplicati.csv + output_log.txt.
+* Pannello metadati + export CSV estesi con sha256/size; log in output_log.txt.
+* Fix: statistiche Output conteggiano i duplicati come elaborati; ripresa
+  sessione salta i file marcati.
+
+[Versione 1.4.0] - 14/10/2026
+--------------------------------------------------------------------
+* Reingegnerizzazione completa `output.py` (v1.4.1 approvata): motore unico
+  SPOSTA/CESTINA, niente copie; collisioni nome(1); dry-run/preview.
+* DISCARD nel Cestino di Windows via send2trash (fallback os.remove);
+  alternativa conservativa Sposta -> scartate/.
+* KEEP doppia archiviazione a scelta: per Anno (YYYY/) e per Anno/Mese
+  (YYYY/"mmm YYYY"/, es. 2023/"gen 2023", "mar 2023", "ott 2023").
+* Gruppo PENDING: Sposta -> Da_rivedere/, Isola senza-data -> Da_datare/,
+  rimarcature massive PENDING->KEEP/DISCARD.
+* SQL libera potenziata: Text multiriga, validatore solo-SELECT con filename,
+  blocco stacking/keyword, Anteprima + destinazione editabile.
+* Tracciabilita post-azione: nuovi campi output_action/output_timestamp
+  (SPOSTATO -> path, CESTINATO...), log output_log.txt, export CSV,
+  revisione limitata al residuo, reset marcature; migrazione auto DB legacy.
+* Nuovo riquadro output 700x760 scrollabile a 3 gruppi con conteggi live.
+* Wrapper retrocompatibili v1.3 mantenuti; backup *.bak_v13.
+
+[Versione 1.3.0] - Data odierna
+--------------------------------------------------------------------
+* Implementazione della gestione resiliente delle eccezioni in `db_analyzer.py`: verifica dell'integrità delle immagini ed intercettazione dei file a 0 byte o corrotti[cite: 1].
+* Introduzione della categoria speciale `ALTRO` per isolare materiale anomalo o di diversa provenienza rispetto al flusso fotografico standard[cite: 1].
+* Aggiunta della funzione di Undo a singolo step (tramite pulsante dedicato o shortcut `Ctrl + Z`) per correggere istantaneamente l'ultima decisione registrata nel database[cite: 1].
+* Espansione del modulo operativo `output.py` e del relativo pannello UI per gestire lo spostamento automatico dei file anomali nella cartella `ALTRO_da_verificare`[cite: 1].
+* **Aggiunta del supporto per query SQL libere ed estrazione avanzata:** inserita nel pannello di Output una casella di testo per digitare ed eseguire query SQL personalizzate, spostando automaticamente i file risultanti nella cartella dedicata "Selezionati da Query".
+* Consolidamento documentale e aggiornamento strutturale alla versione 1.3[cite: 1].
+
+[Versione 1.2.0] - Data odierna
+--------------------------------------------------------------------
+* Implementazione del modulo operativo `output.py` per la gestione batch dei file basata sulle decisioni registrate nel database[cite: 1].
+* Aggiunta del pannello di Output con report statistico in tempo reale (totali, conservati, scartati, in attesa)[cite: 1].
+* Automazione delle azioni sui file: spostamento fisico dei file `DISCARD` nella cartella `scartate` e smistamento dei file `KEEP` in sottocartelle create automaticamente in base all'anno estratto dalla cronologia[cite: 1].
+* Introduzione dello sfondo dinamico della canvas nell'interfaccia grafica: il colore cambia istantaneamente in base allo stato del file (Verde chiaro = KEEP, Arancio/Rosso chiaro = DISCARD, Grigio = PENDING)[cite: 1].
+* Sviluppo del sistema di persistenza e ripresa automatica della sessione tramite il file di servizio JSON (`.photo_review_session.json`) salvato nella cartella di lavoro[cite: 1].
+* Consolidamento documentale e aggiornamento strutturale alla versione 1.2[cite: 1].
+
+[Versione 1.1.0] 
+--------------------------------------------------------------------
+* Raggruppamento ergonomico dei pulsanti di controllo e navigazione nella UI[cite: 1].
+* Estensione della navigazione cronologica con step rapidi (Su/Giù = ±1, Ctrl+Frecce = ±10, PageUp/PageDown = ±100)[cite: 1].
+* Separazione logica tra conservazione (`S` -> KEEP) e salto (`Spazio` -> PENDING invariato)[cite: 1].
+* Evidenza visiva marcata delle decisioni nella barra di stato e blocco del selettore cartella dopo l'apertura[cite: 1].
+
+[Versione 1.0.0] 
+--------------------------------------------------------------------
+* Struttura iniziale a moduli (main, db_analyzer, ui, output)[cite: 1].
+* Introduzione database SQLite e motore di analisi cronologica (EXIF + pattern WhatsApp/Android + mtime)[cite: 1].
+* Tracciamento audit log delle decisioni operatore (KEEP / DISCARD / PENDING)[cite: 1].
